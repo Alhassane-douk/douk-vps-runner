@@ -8,24 +8,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Définir le mot de passe et configurer SSH
-        run: |
-          # 1. Définir le mot de passe de l'utilisateur runner à "root"
-          echo "runner:root" | sudo chpasswd
-          
-          # 2. Autoriser l'authentification par mot de passe dans la config SSH
-          sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
-          sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/g' /etc/ssh/sshd_config
-          
-          # 3. Redémarrer le service SSH
-          sudo systemctl restart ssh || sudo service ssh restart
-
       - name: Connexion Tailscale
         uses: tailscale/github-action@v2
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
-      - name: Garder le runner actif
+      - name: Lancer SSH sur le port 2222
         run: |
-          echo "Machine en ligne sur Tailscale !"
-          sleep 21600
+          # 1. Définir le mot de passe 'root' pour runner
+          echo "runner:root" | sudo chpasswd
+          
+          # 2. Générer les clés d'hôte SSH si absentes
+          sudo ssh-keygen -A
+          
+          # 3. Lancer une instance SSH dédiée
+          sudo /usr/sbin/sshd -p 2222 -o "PasswordAuthentication=yes" -o "PermitRootLogin=yes"
+          
+          echo "Serveur SSH actif sur le port 2222 !"
+
+      - name: Maintenir la session
+        run: sleep 21600
