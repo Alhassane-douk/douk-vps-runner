@@ -1,0 +1,21 @@
+name: VPS Tailscale
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Connexion Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ""
+          oauth-secret: ""
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      - name: Garder le runner actif
+        run: |
+          echo "Machine en ligne sur Tailscale !"
+          sleep 21600
