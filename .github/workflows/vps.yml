@@ -8,12 +8,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configurer la clé SSH
+      - name: Définir le mot de passe et configurer SSH
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PUBLIC_KEY }}" >> ~/.ssh/authorized_keys
-          chmod 700 ~/.ssh
-          chmod 600 ~/.ssh/authorized_keys
+          # 1. Définir le mot de passe de l'utilisateur runner à "root"
+          echo "runner:root" | sudo chpasswd
+          
+          # 2. Autoriser l'authentification par mot de passe dans la config SSH
+          sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+          sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+          
+          # 3. Redémarrer le service SSH
+          sudo systemctl restart ssh || sudo service ssh restart
 
       - name: Connexion Tailscale
         uses: tailscale/github-action@v2
