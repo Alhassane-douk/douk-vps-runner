@@ -1,4 +1,4 @@
-name: VPS Desktop Web (noVNC) & SSH Termux
+name: VPS RustDesk & Termux SSH
 on: workflow_dispatch
 
 jobs:
@@ -23,42 +23,42 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           args: --ssh
 
-      # 3. Installation de XFCE, VNC et noVNC
-      - name: Installer Bureau Graphique & noVNC
+      # 3. Installation et configuration forcée de RustDesk
+      - name: Installer et configurer RustDesk
         run: |
           sudo apt-get update
-          sudo apt-get install -y xfce4 xfce4-goodies tightvncserver novnc websockify net-tools
+          sudo apt-get install -y xfce4 xfce4-goodies xvfb wget dbus-x11
           
-          # Configuration du mot de passe VNC (vncroot)
-          mkdir -p ~/.vnc
-          echo "vncroot" | vncpasswd -f > ~/.vnc/passwd
-          chmod 600 ~/.vnc/passwd
+          # Téléchargement et installation de RustDesk
+          wget https://github.com/rustdesk/rustdesk/releases/download/1.3.1/rustdesk-1.3.1-x86_64.deb -O rustdesk.deb
+          sudo apt-get install -y ./rustdesk.deb || sudo apt-get install -f -y
 
-          # Script de démarrage XFCE pour VNC
-          cat << 'EOF' > ~/.vnc/xstartup
-          #!/bin/sh
-          xrdb $HOME/.Xresources
-          startxfce4 &
-          EOF
-          chmod +x ~/.vnc/xstartup
+          # Arrêt du service pour appliquer les modifications
+          sudo systemctl stop rustdesk || pkill rustdesk || true
 
-          # Lancer le serveur VNC sur le port :1 (5901)
-          vncserver :1 -geometry 1280x720 -depth 24
-
-          # Lancer noVNC Web Client sur le port 6080
-          websockify --web=/usr/share/novnc/ 6080 localhost:5901 &
+          # Configuration forcée du mot de passe (MdpRustdesk2026)
+          sudo rustdesk --password MdpRustdesk2026
+          
+          # Démarrer l'affichage virtuel
+          export DISPLAY=:1
+          Xvfb :1 -screen 0 1280x720x24 &
+          sleep 3
+          dbus-launch startxfce4 &
           sleep 3
 
-      # 4. Affichage du lien d'accès
-      - name: Afficher les adresses d'accès
+          # Démarrer le service RustDesk
+          sudo rustdesk --service &
+          sleep 5
+
+      # 4. Affichage des identifiants exacts
+      - name: Afficher les accès RustDesk
         run: |
-          IP=$(tailscale ip -4)
           echo "=================================================="
-          echo "ACCÈS ACCÈS BUREAU WEB (noVNC) :"
-          echo "http://$IP:6080/vnc.html"
-          echo ""
-          echo "MOT DE PASSE VNC : vncroot"
-          echo "IP TAILSCALE : $IP"
+          echo "IP TAILSCALE :"
+          tailscale ip -4
+          echo "ID RUSTDESK :"
+          rustdesk --get-id
+          echo "MOT DE PASSE CONFIGURÉ : MdpRustdesk2026"
           echo "=================================================="
 
       - name: Maintenir la session active
