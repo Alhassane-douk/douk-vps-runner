@@ -6,4 +6,4 @@ vhostHTTPPort = 8080
 
 # (Optionnel) Jeton de sécurité pour sécuriser la liaison entre frpc et frps
 auth.method = "token"
-auth.token = "CHOISISSEZ_UN_TOKEN_SECRETS_ICI"
+auth.token = "Bintou2000@"
