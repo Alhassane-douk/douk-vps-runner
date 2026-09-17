@@ -1,0 +1,9 @@
+# Configuration du serveur FRP
+bindPort = 7000
+
+# Port HTTP par lequel vous accéderez aux apps hébergées sur votre téléphone
+vhostHTTPPort = 8080
+
+# (Optionnel) Jeton de sécurité pour sécuriser la liaison entre frpc et frps
+auth.method = "token"
+auth.token = "CHOISISSEZ_UN_TOKEN_SECRETS_ICI"
